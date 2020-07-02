@@ -1,0 +1,42 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+
+# Move Apple Photos "moments" into date subfolders
+
+
+use File::Copy;
+use File::Path qw(make_path);
+use File::Spec::Functions;
+
+
+my %months = qw( January 1 February  2 March 3 April 4 May 5 June 6 July 7 August 8 September 9 October 10 November 11 December 12);
+
+for (@ARGV) {
+    if ( /^(.+, )?(January|February|March|April|May|June|July|August|September|October|November|December) (\d{1,2}), (\d{4})$/ ) {
+	my $monthName = $2;
+	my $day = $3;
+	my $year = $4;
+	my $month = $months{$monthName};
+	
+	my $dateDir = catdir($year,
+			     sprintf("%02d-%s", $month, $monthName),
+			     sprintf("%04d-%02d-%02d", $year, $month, $day));
+
+	make_path($dateDir);
+
+	if ($1) {
+	    print "moving $_ to $dateDir\n";
+	    move($_, catdir($dateDir, $_)) or die $!;
+	} else {
+	    print "moving files from $_ to $dateDir\n";
+	    for my $file (glob catdir("'$_'", "*")) {
+		move($file, $dateDir) or die $!;
+		rmdir $dateDir;
+	    }
+	}
+    } else {
+	print "$_ isn't a moment?\n";
+    }
+}
