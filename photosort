@@ -1,0 +1,41 @@
+#! /bin/sh
+
+#dest="/Users/btb/Pictures/Archive"
+dest="."
+
+force=false
+dupes=false
+
+while [[ "$#" > 1 ]]; do case $1 in
+    -f) force=true;;
+    -d) dupes=true;;
+    *) break;;
+  esac; shift
+done
+
+sourcedir=$1
+
+if [ "$dupes" = true ]; then
+    dest="$dest/Dupes"
+fi
+
+dirformat="$dest/%Y/%m-%B/%Y-%m-%d"
+
+
+#seen in JPG and AVI
+exiftool "-Directory<DateTimeOriginal" -d "$dirformat" -if '$DateTimeOriginal' -ext "*" -r "$sourcedir"
+
+#seen in MOV and PNG
+exiftool "-Directory<CreationDate" -d "$dirformat" -if '$CreationDate' -ext "*" -r "$sourcedir"
+
+#seen in MOV and MP4
+exiftool "-Directory<CreateDate" -d "$dirformat" -if '$CreateDate' -api QuickTimeUTC -ext "*" -r "$sourcedir"
+
+#seen in PNG (XMP tag)
+exiftool "-Directory<DateCreated" -d "$dirformat" -if '$DateCreated' -ext "*" -r "$sourcedir"
+
+
+if [ "$force" = true ]; then
+    # last resort
+    exiftool "-Directory<FileModifyDate" -d "$dirformat" -ext "*" -r "$sourcedir"
+fi
